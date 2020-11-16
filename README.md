@@ -1,0 +1,2 @@
+# ReconocimientoFacial
+Proyecto Software Ubicuo
