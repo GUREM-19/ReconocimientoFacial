@@ -36,7 +36,7 @@ def unknown_image_encoded(img):
     return encoding
 
 
-def classify_face(im):
+def classify_face():
     """
     will find all of the faces in a given image and label
     them if it knows what they are
@@ -48,44 +48,52 @@ def classify_face(im):
     faces_encoded = list(faces.values())
     known_face_names = list(faces.keys())
 
-    img = cv2.imread(im, 1)
+    #img = cv2.imread(im, 1)
     #imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
     #img = cv2.resize(img, (0, 0), fx=0.5, fy=0.5)
     #img = img[:,:,::-1]
- 
-    face_locations = face_recognition.face_locations(img)
-    unknown_face_encodings = face_recognition.face_encodings(img, face_locations)
 
-    face_names = []
-    for face_encoding in unknown_face_encodings:
-        # See if the face is a match for the known face(s)
-        matches = face_recognition.compare_faces(faces_encoded, face_encoding)
-        name = "Unknown"
+    cap = cv2.VideoCapture(0)
 
-        # use the known face with the smallest distance to the new face
-        face_distances = face_recognition.face_distance(faces_encoded, face_encoding)
-        best_match_index = np.argmin(face_distances)
-        if matches[best_match_index]:
-            name = known_face_names[best_match_index]
+    while True:
+        success, img = cap.read()
+    # img = captureScreen()
+        imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+        imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
 
-        face_names.append(name)
+        face_locations = face_recognition.face_locations(imgS)
+        unknown_face_encodings = face_recognition.face_encodings(imgS, face_locations)
 
-        for (top, right, bottom, left), name in zip(face_locations, face_names):
-            # Draw a box around the face
-            cv2.rectangle(img, (left-20, top-20), (right+20, bottom+20), (255, 0, 0), 2)
+        face_names = []
+        for face_encoding in unknown_face_encodings:
+            # See if the face is a match for the known face(s)
+            matches = face_recognition.compare_faces(faces_encoded, face_encoding)
+            name = "Unknown"
 
-            # Draw a label with a name below the face
-            cv2.rectangle(img, (left-20, bottom -15), (right+20, bottom+20), (255, 0, 0), cv2.FILLED)
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(img, name, (left -20, bottom + 15), font, 1.0, (255, 255, 255), 2)
-    markAttendance(name)
+            # use the known face with the smallest distance to the new face
+            face_distances = face_recognition.face_distance(faces_encoded, face_encoding)
+            best_match_index = np.argmin(face_distances)
+
+
+            if matches[best_match_index]:
+                name = known_face_names[best_match_index]
+
+            face_names.append(name)
+
+            for (top, right, bottom, left), name in zip(face_locations, face_names):
+                # Draw a box around the face
+                cv2.rectangle(img, (left-20, top-20), (right+20, bottom+20), (255, 0, 0), 2)
+
+                # Draw a label with a name below the face
+                cv2.rectangle(img, (left-20, bottom -15), (right+20, bottom+20), (255, 0, 0), cv2.FILLED)
+                font = cv2.FONT_HERSHEY_DUPLEX
+                cv2.putText(img, name, (left -20, bottom + 15), font, 1.0, (255, 255, 255), 2)
+        markAttendance(name)
 
     # Display the resulting image
-    while True:
-
         cv2.imshow('Video', img)
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            return face_names 
+            return face_names
 
 def markAttendance(name):
     f = open('Attendance.csv','r+') 
@@ -94,11 +102,11 @@ def markAttendance(name):
     for line in myDataList:
         entry = line.split(',')
         nameList.append(entry[0])
-    if name not in line:
-        now = datetime.now()
-        dt_string = now.strftime("%B %d %Y, %H:%M:%S")
-        f.writelines(f'\n{name}, {dt_string}')
 
-print(classify_face("test.jpg"))
+    now = datetime.now()
+    dt_string = now.strftime("%B %d %Y, %H:%M:%S")
+    f.writelines(f'\n{name}, {dt_string}')
 
+#print(classify_face("test.jpg"))
+print(classify_face())
 
