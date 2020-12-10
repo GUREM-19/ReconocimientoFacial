@@ -5,8 +5,6 @@ import face_recognition
 import numpy as np
 import time
 import threading
-import asyncio
-from datetime import datetime
 
 
 def get_encoded_faces():
@@ -50,10 +48,6 @@ def classify_face():
     faces_encoded = list(faces.values())
     known_face_names = list(faces.keys())
     name = "Unknown"
-    #img = cv2.imread(im, 1)
-    #imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
-    #img = cv2.resize(img, (0, 0), fx=0.5, fy=0.5)
-    #img = img[:,:,::-1]
 
     cap = cv2.VideoCapture(0)
 
@@ -78,7 +72,7 @@ def classify_face():
             if matches[best_match_index]:
                 name = known_face_names[best_match_index]
             face_names.append(name)
-
+            #frames the face
             for (y1, x2, y2, x1), name in zip(face_locations, face_names):
                 y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
                 cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
@@ -93,6 +87,7 @@ def classify_face():
             return face_names
 
 def markAttendance(name,m):
+    #Register attendence
     f = open('Registro.csv','r+')
     myDataList = f.readlines()
     nameList = []
@@ -107,6 +102,5 @@ def markAttendance(name,m):
         event.wait(1)
         break
 
-#print(classify_face("test.jpg"))
 print(classify_face())
 
