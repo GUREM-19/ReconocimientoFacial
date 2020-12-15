@@ -47,13 +47,12 @@ def classify_face():
     faces = get_encoded_faces()
     faces_encoded = list(faces.values())
     known_face_names = list(faces.keys())
-    name = "Unknown"
 
     cap = cv2.VideoCapture(0)
 
     while True:
         success, img = cap.read()
-    # img = captureScreen()
+        # img = captureScreen()
         imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
         imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
         face_locations = face_recognition.face_locations(imgS)
@@ -65,13 +64,16 @@ def classify_face():
             name = "Unknown"
 
             # use the known face with the smallest distance to the new face
+            #imprimir face_distances y maybe agregarlo al csv
             face_distances = face_recognition.face_distance(faces_encoded, face_encoding)
             best_match_index = np.argmin(face_distances)
+
             m =face_distances[best_match_index]
 
             if matches[best_match_index]:
                 name = known_face_names[best_match_index]
             face_names.append(name)
+
             #frames the face
             for (y1, x2, y2, x1), name in zip(face_locations, face_names):
                 y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
@@ -81,7 +83,7 @@ def classify_face():
 
         markAttendance(name,m)
 
-    # Display the resulting image
+        # Display the resulting image
         cv2.imshow('Video', img)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             return face_names
@@ -97,10 +99,12 @@ def markAttendance(name,m):
             entry = line.split(',')
             nameList.append(entry[0])
 
+
         dt_string = time.strftime("%B %d %Y, %H:%M:%S")
         f.writelines(f'\n{name}, {dt_string},{str(round(m,3))}')
         event.wait(1)
         break
 
-print(classify_face())
 
+# print(classify_face("test.jpg"))
+print(classify_face())
