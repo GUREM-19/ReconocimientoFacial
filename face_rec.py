@@ -3,8 +3,8 @@ import os
 import cv2
 import face_recognition
 import numpy as np
-from time import sleep
-from datetime import datetime
+import time
+import threading
 
 
 def get_encoded_faces():
@@ -48,11 +48,6 @@ def classify_face():
     faces_encoded = list(faces.values())
     known_face_names = list(faces.keys())
 
-    # img = cv2.imread(im, 1)
-    # imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
-    # img = cv2.resize(img, (0, 0), fx=0.5, fy=0.5)
-    # img = img[:,:,::-1]
-
     cap = cv2.VideoCapture(0)
 
     while True:
@@ -60,10 +55,8 @@ def classify_face():
         # img = captureScreen()
         imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
         imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
-
         face_locations = face_recognition.face_locations(imgS)
         unknown_face_encodings = face_recognition.face_encodings(imgS, face_locations)
-
         face_names = []
         for face_encoding in unknown_face_encodings:
             # See if the face is a match for the known face(s)
@@ -75,39 +68,42 @@ def classify_face():
             face_distances = face_recognition.face_distance(faces_encoded, face_encoding)
             best_match_index = np.argmin(face_distances)
 
+            m =face_distances[best_match_index]
+
             if matches[best_match_index]:
                 name = known_face_names[best_match_index]
-
             face_names.append(name)
-            #Aqui esta el problema del recuadro por el reshape
-            for (top, right, bottom, left), name in zip(face_locations, face_names):
-                # Draw a box around the face
-                cv2.rectangle(img, (left - 20, top - 20), (right + 20, bottom + 20), (255, 0, 0), 2)
 
-                # Draw a label with a name below the face
-                cv2.rectangle(img, (left - 20, bottom - 15), (right + 20, bottom + 20), (255, 0, 0), cv2.FILLED)
-                font = cv2.FONT_HERSHEY_DUPLEX
-                cv2.putText(img, name, (left - 20, bottom + 15), font, 1.0, (255, 255, 255), 2)
-        markAttendance(name)
+            #frames the face
+            for (y1, x2, y2, x1), name in zip(face_locations, face_names):
+                y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
+                cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                cv2.rectangle(img, (x1, y2 - 35), (x2, y2), (255, 0, 0), cv2.FILLED)
+                cv2.putText(img, name, (x1 + 16, y2 - 6), cv2.FONT_HERSHEY_DUPLEX, 0.50, (255, 255, 255), 1)
+
+        markAttendance(name,m)
 
         # Display the resulting image
         cv2.imshow('Video', img)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             return face_names
 
-
-def markAttendance(name):
-    f = open('Attendance.csv', 'r+')
+def markAttendance(name,m):
+    #Register attendence
+    f = open('Registro.csv','r+')
     myDataList = f.readlines()
     nameList = []
-    #Por aqui deberia ir el delay, https://www.cyberciti.biz/faq/python-sleep-command-syntax-example/
-    for line in myDataList:
-        entry = line.split(',')
-        nameList.append(entry[0])
+    event = threading.Event()
+    while True:
+        for line in myDataList:
+            entry = line.split(',')
+            nameList.append(entry[0])
 
-    now = datetime.now()
-    dt_string = now.strftime("%B %d %Y, %H:%M:%S")
-    f.writelines(f'\n{name}, {dt_string}')
+
+        dt_string = time.strftime("%B %d %Y, %H:%M:%S")
+        f.writelines(f'\n{name}, {dt_string},{str(round(m,3))}')
+        event.wait(1)
+        break
 
 
 # print(classify_face("test.jpg"))
